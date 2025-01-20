@@ -17,18 +17,7 @@ const io = new Server(server, {
   },
 });
 
-// Middleware para desativar CORS
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*"); // Permite qualquer origem
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // Métodos permitidos
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, access_token"); // Cabeçalhos permitidos
-  res.setHeader("Access-Control-Allow-Credentials", "true"); // Permite credenciais
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204); // Responde diretamente ao método OPTIONS
-  }
-  next();
-});
-
+app.use(cors());
 // Middleware para JSON
 app.use(express.json());
 
