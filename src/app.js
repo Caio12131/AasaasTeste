@@ -9,6 +9,8 @@ const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 
+
+app.use(cors());
 // Configuração do Socket.IO
 const io = new Server(server, {
   cors: {
@@ -18,7 +20,7 @@ const io = new Server(server, {
   },
 });
 
-app.use(cors());
+
 // Middleware para JSON
 app.use(express.json());
 
