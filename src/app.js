@@ -1,4 +1,5 @@
 const express = require("express")
+const cors = require("cors")
 const axios = require("axios")
 const http = require("http")
 const { Server } = require("socket.io")
@@ -10,6 +11,23 @@ const server = http.createServer(app)
 
 // Update these arrays with your frontend URLs
 const allowedOrigins = ["http://localhost:3000", "https://your-production-frontend-url.com"]
+
+// CORS configuration
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true)
+      } else {
+        callback(new Error("Not allowed by CORS"))
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "access_token"],
+    credentials: true,
+    optionsSuccessStatus: 204,
+  }),
+)
 
 const io = new Server(server, {
   cors: {
