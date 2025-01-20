@@ -16,24 +16,23 @@ const io = new Server(server, {
 });
 
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://seu-frontend-hospedado.com"], // Certifique-se de usar os domínios corretos
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  origin: ["http://localhost:3000", "https://seu-frontend-hospedado.com"], // Certifique-se de listar as origens corretas
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Métodos permitidos
   allowedHeaders: ["Content-Type", "Authorization", "access_token"],
-  credentials: true, // Se necessário para cookies ou autenticação
+  credentials: true,
 };
 
 // Middleware de CORS
 app.use(cors(corsOptions));
 
-// Middleware para lidar com preflight requests
+// Middleware para requisições OPTIONS (preflight)
 app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type,Authorization,access_token");
   res.header("Access-Control-Allow-Credentials", "true");
-  res.sendStatus(204);
+  res.sendStatus(204); // Retorna um status adequado para OPTIONS
 });
-
 
 
 // Configurações de CORS;
