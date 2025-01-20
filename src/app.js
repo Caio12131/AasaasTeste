@@ -3,11 +3,13 @@ const axios = require("axios");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
-const qrcode = require('qrcode');
+const qrcode = require("qrcode");
 require("dotenv").config();
 
 const app = express();
-const server = http.createServer(app); // Cria o servidor HTTP
+const server = http.createServer(app);
+
+// Configuração do Socket.IO
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3000", "https://your-production-frontend-url.com"],
@@ -16,23 +18,16 @@ const io = new Server(server, {
   },
 });
 
-// Configurações de CORS
+// Configuração de CORS
 const corsOptions = {
   origin: ["http://localhost:3000", "https://your-production-frontend-url.com"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "access_token"],
-  credentials: true, // Necessário se enviar cookies ou credenciais
-  optionsSuccessStatus: 204, // Evitar erros de preflight com HTTP 204
+  credentials: true,
 };
+app.use(cors(corsOptions));
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*"); // Ajuste se necessário
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, access_token");
-  next();
-});
-
-
+// Middleware para JSON
 app.use(express.json());
 
 // Configuração das variáveis de ambiente
