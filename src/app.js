@@ -16,27 +16,20 @@ const io = new Server(server, {
 });
 
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://seu-frontend-hospedado.com"], // Certifique-se de listar as origens corretas
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Métodos permitidos
+  origin: ["http://localhost:3000", "https://aasaasteste-production.up.railway.app"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "access_token"],
   credentials: true,
-};//
+}
 
 // Middleware de CORS
-app.use(cors(corsOptions));
+app.use(cors(corsOptions))
 
 // Middleware para requisições OPTIONS (preflight)
-app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization,access_token");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.sendStatus(204); // Retorna um status adequado para OPTIONS
-});
-
+app.options("*", cors(corsOptions))
 
 // Configurações de CORS;
-app.use(express.json());
+app.use(express.json())
 
 // Configuração das variáveis de ambiente
 const ASAAS_API_KEY = "$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjVkNzVjZmJhLTU3YWEtNGQ0YS05NjkxLWM1MDkwMmE3ZTFhODo6JGFhY2hfYzU4MmU4NWYtNmZlOS00ODQ2LTkzNTMtNzUxNTZkNmNjYzM2";
