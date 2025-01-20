@@ -1,6 +1,5 @@
 const express = require("express");
 const axios = require("axios");
-const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 const qrcode = require("qrcode");
@@ -12,23 +11,24 @@ const server = http.createServer(app);
 // Configuração do Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://your-production-frontend-url.com"],
+    origin: "*", // Permite qualquer origem no Socket.IO
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-// Configuração de CORS
-const corsOptions = {
-  origin: ["http://localhost:3000", "https://your-production-frontend-url.com"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "access_token"],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// Middleware para desabilitar CORS (Permite qualquer origem)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*"); // Permite qualquer origem
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, access_token");
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
 
 // Middleware para JSON
 app.use(express.json());
+
 
 // Configuração das variáveis de ambiente
 const ASAAS_API_KEY = "$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjVkNzVjZmJhLTU3YWEtNGQ0YS05NjkxLWM1MDkwMmE3ZTFhODo6JGFhY2hfYzU4MmU4NWYtNmZlOS00ODQ2LTkzNTMtNzUxNTZkNmNjYzM2";
