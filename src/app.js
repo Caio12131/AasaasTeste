@@ -8,9 +8,13 @@ require("dotenv").config()
 
 const app = express()
 const server = http.createServer(app)
+
+// Update these arrays with your frontend URLs
+const allowedOrigins = ["http://localhost:3000", "https://your-production-frontend-url.com"]
+
 const io = new Server(server, {
   cors: {
-    origin: ["https://your-production-frontend-url.com"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -18,7 +22,13 @@ const io = new Server(server, {
 
 // Configurações de CORS
 const corsOptions = {
-  origin: ["https://your-production-frontend-url.com"],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error("Not allowed by CORS"))
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization", "access_token"],
   credentials: true,
