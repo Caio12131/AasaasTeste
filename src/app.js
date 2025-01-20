@@ -1,6 +1,5 @@
 const express = require("express")
 const axios = require("axios")
-const cors = require("cors")
 const http = require("http")
 const { Server } = require("socket.io")
 const qrcode = require("qrcode")
@@ -20,22 +19,20 @@ const io = new Server(server, {
   },
 })
 
-// Configurações de CORS
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      callback(new Error("Not allowed by CORS"))
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization", "access_token"],
-  credentials: true,
-  optionsSuccessStatus: 204,
-}
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin)
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, access_token")
+  res.setHeader("Access-Control-Allow-Credentials", "true")
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204)
+  }
+  next()
+})
 
-app.use(cors(corsOptions))
 app.use(express.json())
 
 // Configuração das variáveis de ambiente
