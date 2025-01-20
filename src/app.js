@@ -10,7 +10,19 @@ const app = express();
 const server = http.createServer(app);
 
 
-app.use(cors());
+const corsOptions = {
+  origin: '*',  // Permite todas as origens. Use um domínio específico se necessário.
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Adicione outros métodos conforme necessário
+  allowedHeaders: ['Content-Type', 'Authorization'], // Permite cabeçalhos personalizados como 'Authorization'
+  preflightContinue: false,  // Indica que a requisição de preflight não será passada adiante
+  optionsSuccessStatus: 204  // Responde com código 204 para preflight com sucesso
+};
+
+app.use(cors(corsOptions));
+;
+
+app.options('*', cors(corsOptions)); // Permite preflight para todas as rotas
+
 // Configuração do Socket.IO
 // const io = new Server(server, {
 //   cors: {
