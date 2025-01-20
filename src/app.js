@@ -10,8 +10,8 @@ const app = express();
 const server = http.createServer(app);
 
 
-// app.use(cors());
-// // Configuração do Socket.IO
+app.use(cors());
+// Configuração do Socket.IO
 // const io = new Server(server, {
 //   cors: {
 //     origin: "*", // Permite qualquer origem
