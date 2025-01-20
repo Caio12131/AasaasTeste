@@ -20,7 +20,7 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Métodos permitidos
   allowedHeaders: ["Content-Type", "Authorization", "access_token"],
   credentials: true,
-};
+};//
 
 // Middleware de CORS
 app.use(cors(corsOptions));
