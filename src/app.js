@@ -28,7 +28,6 @@ const io = new Server(server, {
   cors: corsOptions,
 })
 
-// Configurações de CORS;
 app.use(express.json())
 
 // Configuração das variáveis de ambiente
