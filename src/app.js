@@ -3,16 +3,20 @@ const axios = require("axios");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
-const qrcode = require('qrcode');
+const qrcode = require("qrcode");
 require("dotenv").config();
 
 const app = express();
-const server = http.createServer(app); // Cria o servidor HTTP
-const io = new Server(server); // Sem configurações de CORS
-
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Permitir todas as origens (modifique conforme necessário)
+    methods: ["GET", "POST"], // Métodos permitidos
+  },
+});
 
 // Configurações de CORS
-
+app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 app.use(express.json());
 
 // Configuração das variáveis de ambiente
