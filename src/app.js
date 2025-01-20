@@ -1,57 +1,51 @@
-const express = require("express")
-const cors = require("cors")
-const axios = require("axios")
-const http = require("http")
-const { Server } = require("socket.io")
-const qrcode = require("qrcode")
-require("dotenv").config()
+const express = require("express");
+const cors = require("cors");
+const axios = require("axios");
+const http = require("http");
+const { Server } = require("socket.io");
+const qrcode = require("qrcode");
+require("dotenv").config();
 
-const app = express()
-const server = http.createServer(app)
+const app = express();
+const server = http.createServer(app);
 
 // Update these arrays with your frontend URLs
-const allowedOrigins = ["http://localhost:3000", "https://your-production-frontend-url.com"]
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://aasaasteste-production.up.railway.app"
+];
 
 // CORS configuration
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true)
+        callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"))
+        callback(new Error("Not allowed by CORS"));
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "access_token"],
     credentials: true,
-    optionsSuccessStatus: 204,
-  }),
-)
-
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-})
+  })
+);
 
 app.use((req, res, next) => {
-  const origin = req.headers.origin
+  const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin)
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, access_token")
-  res.setHeader("Access-Control-Allow-Credentials", "true")
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, access_token");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
   if (req.method === "OPTIONS") {
-    return res.sendStatus(204)
+    return res.sendStatus(204);
   }
-  next()
-})
+  next();
+});
 
-app.use(express.json())
+app.use(express.json());
 
 // Configuração das variáveis de ambiente
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY
