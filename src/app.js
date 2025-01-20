@@ -8,24 +8,11 @@ require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app); // Cria o servidor HTTP
-const io = new Server(server, {
-  cors: {
-    origin: ["http://localhost:3000", "https://your-production-frontend-url.com"],
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+const io = new Server(server); // Sem configurações de CORS
+
 
 // Configurações de CORS
-const corsOptions = {
-  origin: ["http://localhost:3000", "https://your-production-frontend-url.com"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization", 'access_token'],
-  credentials: true,
-  optionsSuccessStatus: 204,
-};
 
-app.use(cors(corsOptions));
 app.use(express.json());
 
 // Configuração das variáveis de ambiente
