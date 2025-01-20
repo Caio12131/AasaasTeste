@@ -15,8 +15,20 @@ const io = new Server(server, {
   },
 });
 
-// Configurações de CORS
-app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
+const corsOptions = {
+  origin: ["http://localhost:3000", "https://seu-frontend-hospedado.com"], // Substitua pelo domínio do seu frontend
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "access_token"],
+  credentials: true, // Permitir envio de cookies ou autenticação, se necessário
+};
+
+app.use(cors(corsOptions));
+
+// Middleware para lidar com solicitações prévias (preflight)
+app.options("*", cors(corsOptions));
+
+
+// Configurações de CORS;
 app.use(express.json());
 
 // Configuração das variáveis de ambiente
