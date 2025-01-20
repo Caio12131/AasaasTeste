@@ -1,51 +1,34 @@
-const express = require("express");
-const cors = require("cors");
-const axios = require("axios");
-const http = require("http");
-const { Server } = require("socket.io");
-const qrcode = require("qrcode");
-require("dotenv").config();
+const express = require("express")
+const cors = require("cors")
+const axios = require("axios")
+const http = require("http")
+const { Server } = require("socket.io")
+const qrcode = require("qrcode")
+require("dotenv").config()
 
-const app = express();
-const server = http.createServer(app);
+const app = express()
+const server = http.createServer(app)
 
 // Update these arrays with your frontend URLs
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://aasaasteste-production.up.railway.app"
-];
+const allowedOrigins = ["http://localhost:3000", "https://aasaasteste-production.up.railway.app"]
 
 // CORS configuration
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
+        callback(null, true)
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error("Not allowed by CORS"))
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "access_token"],
     credentials: true,
-  })
-);
+  }),
+)
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, access_token");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  next();
-});
-
-app.use(express.json());
+app.use(express.json())
 
 // Configuração das variáveis de ambiente
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY
@@ -97,8 +80,6 @@ app.post("/customers", async (req, res) => {
     }
   }
 })
-
-console.log("Servidor inicializado")
 
 // Rota para criar pagamentos no Asaas
 app.post("/payments", async (req, res) => {
@@ -244,29 +225,19 @@ app.post("/webhook", async (req, res) => {
 })
 
 // Configuração do Socket.IO
-let connectedClientId = null
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+})
 
 io.on("connection", (socket) => {
   console.log("Novo cliente conectado:", socket.id)
 
-  socket.on("join", (clientId) => {
-    if (connectedClientId !== clientId) {
-      console.log(`Cliente ${clientId} está tentando se conectar. Redirecionando...`)
-      socket.emit("clientAlreadyConnected", { message: "Você já está conectado!" })
-    } else {
-      console.log(`Cliente ${clientId} conectado com sucesso.`)
-      connectedClientId = clientId
-    }
-  })
-
-  socket.on("paymentReceived", (paymentDetails) => {
-    console.log("Pagamento recebido:", paymentDetails)
-    io.emit("paymentReceived", paymentDetails)
-  })
-
   socket.on("disconnect", () => {
     console.log("Cliente desconectado:", socket.id)
-    connectedClientId = null
   })
 })
 
