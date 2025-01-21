@@ -9,7 +9,7 @@ require("dotenv").config()
 const app = express()
 const server = http.createServer(app)
 
-const allowedOrigins = ["http://localhost:3000", "https://asaasfrontteste-production.up.railway.app"]
+const allowedOrigins = ["http://localhost:3000", "https://asaas-front-teste.vercel.app"]
 
 app.use(
   cors({
