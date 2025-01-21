@@ -9,17 +9,16 @@ require("dotenv").config()
 const app = express()
 const server = http.createServer(app)
 
-const allowedOrigins = ["http://localhost:3000", "https://asaas-front-teste.vercel.app"]
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://asaas-front-teste.vercel.app",
+  "https://aasaasteste-production.up.railway.app",
+]
 
+// Updated CORS configuration
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true)
-      } else {
-        callback(new Error("Not allowed by CORS"))
-      }
-    },
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "access_token"],
     credentials: true,
@@ -183,12 +182,16 @@ app.post("/webhook", async (req, res) => {
   }
 })
 
+// Updated Socket.IO configuration
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
+    transports: ["websocket", "polling"],
   },
+  pingTimeout: 60000,
+  pingInterval: 25000,
 })
 
 io.on("connection", (socket) => {
