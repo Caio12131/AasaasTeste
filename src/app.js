@@ -2,8 +2,6 @@ const express = require("express")
 const cors = require("cors")
 const axios = require("axios")
 const http = require("http")
-const { Server } = require("socket.io")
-const qrcode = require("qrcode")
 require("dotenv").config()
 
 const app = express()
@@ -84,7 +82,6 @@ app.post("/payments", async (req, res) => {
     const { value, description } = req.body
     console.log("Dados recebidos na requisição de pagamento:", { value, description })
 
-    // Verifica se os campos obrigatórios estão presentes
     if (!value || !description) {
       console.warn("Informações obrigatórias ausentes na requisição de pagamento.")
       return res.status(400).json({
@@ -93,7 +90,6 @@ app.post("/payments", async (req, res) => {
       })
     }
 
-    // Prepara os dados para a criação do QR Code estático
     const pixPaymentData = {
       value: Number(value).toFixed(2),
       description,
@@ -101,7 +97,6 @@ app.post("/payments", async (req, res) => {
 
     console.log("Preparando para enviar dados ao Asaas:", pixPaymentData)
 
-    // Faz a requisição para criar o QR Code estático
     const response = await axios.post(`${ASAAS_API_URL}/pix/qrCodes/static`, pixPaymentData, {
       headers: {
         "Content-Type": "application/json",
@@ -111,14 +106,13 @@ app.post("/payments", async (req, res) => {
 
     console.log("Resposta do Asaas para a criação do QR Code PIX:", response.data)
 
-    // Verifica se a resposta contém os dados esperados
     if (response.data && response.data.encodedImage && response.data.payload) {
       res.status(200).json({
         message: "Pagamento PIX gerado com sucesso.",
         value: pixPaymentData.value,
         description: pixPaymentData.description,
         pixQrCode: response.data.payload,
-        qrCodeImage: `data:image/png;base64,${response.data.encodedImage}`, // Certifique-se de adicionar o prefixo base64
+        qrCodeImage: `data:image/png;base64,${response.data.encodedImage}`,
       })
     } else {
       throw new Error("Não foi possível obter o QR Code PIX")
@@ -133,6 +127,34 @@ app.post("/payments", async (req, res) => {
   }
 })
 
+// SSE setup
+const clients = new Set()
+
+function sendEventToAll(event) {
+  clients.forEach((client) => {
+    client.res.write(`data: ${JSON.stringify(event)}\n\n`)
+  })
+}
+
+app.get("/events", (req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  })
+
+  const clientId = Date.now()
+  const newClient = {
+    id: clientId,
+    res,
+  }
+  clients.add(newClient)
+
+  req.on("close", () => {
+    clients.delete(newClient)
+  })
+})
+
 app.post("/webhook", async (req, res) => {
   try {
     const { event, payment } = req.body
@@ -143,36 +165,50 @@ app.post("/webhook", async (req, res) => {
       return res.status(400).send("Dados inválidos no webhook")
     }
 
+    let sseEvent
     switch (event) {
       case "PAYMENT_CREATED":
         console.log(`Pagamento PIX criado. ID=${payment.id}, Valor=${payment.value}`)
-        io.emit("paymentCreated", {
-          paymentId: payment.id,
-          value: payment.value,
-          status: "created",
-          message: "Pagamento PIX criado com sucesso!",
-        })
+        sseEvent = {
+          type: "paymentCreated",
+          data: {
+            paymentId: payment.id,
+            value: payment.value,
+            status: "created",
+            message: "Pagamento PIX criado com sucesso!",
+          },
+        }
         break
       case "PAYMENT_RECEIVED":
         console.log(`Pagamento PIX recebido. ID=${payment.id}, Valor=${payment.value}`)
-        io.emit("paymentReceived", {
-          paymentId: payment.id,
-          value: payment.value,
-          status: "confirmed",
-          message: "Pagamento PIX confirmado com sucesso!",
-        })
+        sseEvent = {
+          type: "paymentReceived",
+          data: {
+            paymentId: payment.id,
+            value: payment.value,
+            status: "confirmed",
+            message: "Pagamento PIX confirmado com sucesso!",
+          },
+        }
         break
       case "PAYMENT_UPDATED":
         console.log(`Pagamento PIX atualizado. ID=${payment.id}, Valor=${payment.value}, Status=${payment.status}`)
-        io.emit("paymentUpdated", {
-          paymentId: payment.id,
-          value: payment.value,
-          status: payment.status,
-          message: `Status do pagamento PIX atualizado para ${payment.status}`,
-        })
+        sseEvent = {
+          type: "paymentUpdated",
+          data: {
+            paymentId: payment.id,
+            value: payment.value,
+            status: payment.status,
+            message: `Status do pagamento PIX atualizado para ${payment.status}`,
+          },
+        }
         break
       default:
         console.warn("Evento não reconhecido recebido no webhook:", event)
+    }
+
+    if (sseEvent) {
+      sendEventToAll(sseEvent)
     }
 
     res.status(200).send("Evento processado com sucesso")
@@ -180,26 +216,6 @@ app.post("/webhook", async (req, res) => {
     console.error("Erro no processamento do webhook:", error.message)
     res.status(500).send("Erro interno no webhook")
   }
-})
-
-// Updated Socket.IO configuration
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
-    transports: ["websocket", "polling"],
-  },
-  pingTimeout: 60000,
-  pingInterval: 25000,
-})
-
-io.on("connection", (socket) => {
-  console.log("Novo cliente conectado:", socket.id)
-
-  socket.on("disconnect", () => {
-    console.log("Cliente desconectado:", socket.id)
-  })
 })
 
 const PORT = process.env.PORT || 5000
