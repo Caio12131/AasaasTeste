@@ -10,8 +10,8 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   "http://localhost:3000",
-  // "https://asaas-front-teste.vercel.app",
-  "asaasfrontteste-production.up.railway.app",
+  "https://asaas-front-teste.vercel.app",
+  "https://aasaasteste-production.up.railway.app",
 ];
 
 app.use(
