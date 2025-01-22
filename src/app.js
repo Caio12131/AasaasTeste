@@ -1,11 +1,9 @@
 const express = require("express")
 const cors = require("cors")
 const axios = require("axios")
-const http = require("http")
 require("dotenv").config()
 
 const app = express()
-const server = http.createServer(app)
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -127,15 +125,7 @@ app.post("/payments", async (req, res) => {
   }
 })
 
-// SSE setup
-const clients = new Set()
-
-function sendEventToAll(event) {
-  clients.forEach((client) => {
-    client.res.write(`data: ${JSON.stringify(event)}\n\n`)
-  })
-}
-
+// SSE endpoint
 app.get("/events", (req, res) => {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -143,15 +133,29 @@ app.get("/events", (req, res) => {
     Connection: "keep-alive",
   })
 
-  const clientId = Date.now()
-  const newClient = {
-    id: clientId,
-    res,
+  const sendEvent = (event, data) => {
+    res.write(`event: ${event}\n`)
+    res.write(`data: ${JSON.stringify(data)}\n\n`)
   }
-  clients.add(newClient)
+
+  // Keep the connection alive
+  const keepAlive = setInterval(() => {
+    res.write(": keepalive\n\n")
+  }, 30000)
 
   req.on("close", () => {
-    clients.delete(newClient)
+    clearInterval(keepAlive)
+  })
+
+  // Store the sendEvent function for use in the webhook
+  req.sendEvent = sendEvent
+
+  // Add this connection to the set
+  app.get("connections").add(req)
+
+  req.on("close", () => {
+    clearInterval(keepAlive)
+    app.get("connections").delete(req)
   })
 })
 
@@ -165,51 +169,44 @@ app.post("/webhook", async (req, res) => {
       return res.status(400).send("Dados inválidos no webhook")
     }
 
-    let sseEvent
+    let eventData
     switch (event) {
       case "PAYMENT_CREATED":
         console.log(`Pagamento PIX criado. ID=${payment.id}, Valor=${payment.value}`)
-        sseEvent = {
-          type: "paymentCreated",
-          data: {
-            paymentId: payment.id,
-            value: payment.value,
-            status: "created",
-            message: "Pagamento PIX criado com sucesso!",
-          },
+        eventData = {
+          paymentId: payment.id,
+          value: payment.value,
+          status: "created",
+          message: "Pagamento PIX criado com sucesso!",
         }
         break
       case "PAYMENT_RECEIVED":
         console.log(`Pagamento PIX recebido. ID=${payment.id}, Valor=${payment.value}`)
-        sseEvent = {
-          type: "paymentReceived",
-          data: {
-            paymentId: payment.id,
-            value: payment.value,
-            status: "confirmed",
-            message: "Pagamento PIX confirmado com sucesso!",
-          },
+        eventData = {
+          paymentId: payment.id,
+          value: payment.value,
+          status: "confirmed",
+          message: "Pagamento PIX confirmado com sucesso!",
         }
         break
       case "PAYMENT_UPDATED":
         console.log(`Pagamento PIX atualizado. ID=${payment.id}, Valor=${payment.value}, Status=${payment.status}`)
-        sseEvent = {
-          type: "paymentUpdated",
-          data: {
-            paymentId: payment.id,
-            value: payment.value,
-            status: payment.status,
-            message: `Status do pagamento PIX atualizado para ${payment.status}`,
-          },
+        eventData = {
+          paymentId: payment.id,
+          value: payment.value,
+          status: payment.status,
+          message: `Status do pagamento PIX atualizado para ${payment.status}`,
         }
         break
       default:
         console.warn("Evento não reconhecido recebido no webhook:", event)
+        return res.status(200).send("Evento não processado")
     }
 
-    if (sseEvent) {
-      sendEventToAll(sseEvent)
-    }
+    // Send the event to all connected clients
+    app.get("connections").forEach((connection) => {
+      connection.sendEvent(event.toLowerCase(), eventData)
+    })
 
     res.status(200).send("Evento processado com sucesso")
   } catch (error) {
@@ -218,8 +215,11 @@ app.post("/webhook", async (req, res) => {
   }
 })
 
+// Store active SSE connections
+app.set("connections", new Set())
+
 const PORT = process.env.PORT || 5000
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
 
