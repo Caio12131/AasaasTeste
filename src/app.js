@@ -17,9 +17,11 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Permitir requisições sem origem (ex: Postman ou servidor interno)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.error(`Origem não permitida pelo CORS: ${origin}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -29,6 +31,8 @@ app.use(
   })
 );
 
+// Adicionar middleware para OPTIONS
+app.options("*", cors());
 
 app.use(express.json());
 
